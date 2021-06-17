@@ -12,6 +12,34 @@ const config = {
   measurementId: 'G-K998520L92',
 };
 
+export const createUserProfileDocument = async (userAuth, additionalData) => {
+  if (!userAuth) return;
+
+  const userRef = firestore.doc(`users/${userAuth.uid}`);
+
+  const snapShot = await userRef.get();
+  const { displayName, email } = userAuth;
+  if (!snapShot.exists) {
+    const createdAt = new Date();
+
+    try {
+      await userRef.set({
+        displayName,
+        email,
+        createdAt,
+        ...additionalData,
+      });
+    } catch (error) {
+      console.log('error creating user', error.message);
+    }
+  } else if (!snapShot.data().displayName) {
+    await userRef.update({
+      displayName,
+    });
+  }
+  return userRef;
+};
+
 firebase.initializeApp(config);
 
 export const auth = firebase.auth();
